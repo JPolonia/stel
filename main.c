@@ -20,14 +20,14 @@
 
 #define GP_MIN_TIME	((double)1*60)
 #define GP_MAX_TIME	((double)5*60)
-#define GP_AVG_TIME	((double)2*60)
-#define GP_CHANNELS	(6)
+#define GP_AVG_TIME	((double)2*60) // Mean time of exponential distribution (PC calls)
+#define GP_MAX_CHANNELS	(6)
 
 #define AS_MIN_TIME	((double)30)
 #define AS_MAX_TIME	((double)120)
 #define AS_AVG_TIME	((double)1*60)
 #define AS_STDDEV	((double)20)
-#define AS_CHANNELS	(6)
+#define AS_MAX_CHANNELS	(6)
 
 #define AS_SS_MIN	((double)1*60)
 #define AS_SS_AVG	((double)2.5*60)
@@ -44,6 +44,31 @@
 int is_as(void) {
 	//return urng() < AS_CALLS;
 	return ((double)rand()/RAND_MAX) < AS_CALLS;
+}
+
+double calc_distribuition(int type){
+	double dur;
+
+	switch (type){
+		case EVENT_START:
+			return erlang_random(1, LAMBDA);
+		case EVENT_END:
+			do {
+    	  dur = GP_MIN_TIME + erlang_random(1, GP_AVG_TIME);
+			} while ((dur < GP_MIN_TIME) || (dur > GP_MAX_TIME));
+			return dur;
+		case EVENT_AS | EVENT_START:
+			do {
+				dur = poisson_random(AS_AVG_TIME, AS_STDDEV);
+			} while ((dur < AS_MIN_TIME) || (dur > AS_MAX_TIME));// Min time=30s, Max time=0.75s
+			return dur;
+		case EVENT_AS | EVENT_END:
+			do {
+				dur = poisson_random(AS_AVG_TIME, AS_STDDEV);
+			} while ((dur < AS_MIN_TIME) || (dur > AS_MAX_TIME));// Min time=30s, Max time=0.75s
+			return dur;
+			break;
+	}
 }
 
 int main(int argc, const char *argv[]) {
@@ -71,7 +96,7 @@ int main(int argc, const char *argv[]) {
 	list *as_buffer = NULL;
 
 	ulong total_events = 0, as_events = 0, gp_events = 0;
-	ulong gp_active = 0, as_active = 0;
+	ulong gp_channels = 0, as_channels = 0;
 	ulong gp_waiting = 0, as_waiting = 0;
 	ulong gp_delayed = 0, as_delayed = 0;
 	ulong blocked_users = 0; // AS events can't block as queue is infinite
@@ -98,10 +123,12 @@ int main(int argc, const char *argv[]) {
 		switch (aux_type /*& EVENT_END*/) {
 			case EVENT_START:
 				printf("EVENT GP START: %.2lf\n", sim_time);
-				gp_events++;
+				++gp_events;
+
 				// If Channels arent full
-				if (gp_active < GP_CHANNELS) {
-					++gp_active; //A channel servers a call
+				if (gp_channels < GP_MAX_CHANNELS) {
+					++gp_channels; //A channel servers a call
+
 					//Calcula partida do evento
 					if (is_as()){
 						double dur = poisson_random(AS_AVG_TIME, AS_STDDEV);
@@ -128,10 +155,10 @@ int main(int argc, const char *argv[]) {
 
 			case EVENT_END:
 				printf("EVENT GP END: %.2lf\n", sim_time);
-				--gp_active; //Releases 1 channel
+				--gp_channels; //Releases 1 channel
 				if (gp_waiting > 0 /*&& gp_buffer != NULL*/) {
 					--gp_waiting;
-					++gp_active; //A channel servers a call
+					++gp_channels; //A channel servers a call
 
 					double waited = sim_time - gp_buffer->time;
 					gp_delayed_time += waited;
@@ -155,11 +182,11 @@ int main(int argc, const char *argv[]) {
 				as_events++;
 
 				// If Free Channels
-				if (as_active < AS_CHANNELS) {
+				if (as_channels < AS_MAX_CHANNELS) {
 
 
-					as_active++; //A channel servers a call
-					gp_active--; // One channel from GP becomes free, because passes the call to AS
+					as_channels++; //A channel servers a call
+					gp_channels--; // One channel from GP becomes free, because passes the call to AS
 
 					double as_dur = AS_SS_MIN + erlang_random(1, AS_SS_AVG);
 					events = list_add(events, sim_time + as_dur, EVENT_AS | EVENT_END);
@@ -182,12 +209,12 @@ int main(int argc, const char *argv[]) {
 
 			case EVENT_AS | EVENT_END:  //(11) = 3
 				printf("EVENT AS END: %.2lf\n", sim_time);
-				as_active--;
+				as_channels--;
 
 				if (as_waiting > 0 /*&& as_buffer != NULL*/) {
 					--as_waiting;
-					as_active++;
-					gp_active--; // One channel from GP becomes free, because passes the call to AS
+					as_channels++;
+					gp_channels--; // One channel from GP becomes free, because passes the call to AS
 
 					double dur = AS_SS_MIN + erlang_random(1, AS_SS_AVG);
 					events = list_add(events, sim_time + dur, EVENT_AS | EVENT_END);

@@ -20,7 +20,7 @@
 #define GP_MIN_TIME	((double)1*60)
 #define GP_MAX_TIME	((double)5*60)
 #define GP_AVG_TIME	((double)2*60)
-#define GP_CHANNELS	(6)
+#define GP_MAX_CHANNELS	(6)
 
 #define AS_MIN_TIME	((double)30)
 #define AS_MAX_TIME	((double)120)
@@ -66,7 +66,7 @@ int main(int argc, const char *argv[]) {
 	list *as_buffer = NULL;
 
 	ulong total_events = 0, as_events = 0;
-	ulong gp_active = 0, as_active = 0;
+	ulong gp_channels = 0, as_channels = 0;
 	ulong gp_waiting = 0, as_waiting = 0;
 	ulong delayed = 0, as_delayed = 0;
 	ulong blocked_users = 0; // AS events can't block as queue is infinite
@@ -86,11 +86,11 @@ int main(int argc, const char *argv[]) {
 				++total_events;
 
 
-				if (gp_active < GP_CHANNELS) {
+				if (gp_channels < GP_MAX_CHANNELS) {
 					double dur = GP_MIN_TIME + erlang_random(1, GP_AVG_TIME);
 					//printf("cur call end: %.2lf\n", sim_time + dur);
 					events = list_add(events, sim_time + (dur > GP_MAX_TIME? GP_MAX_TIME: dur), EVENT_END);
-					++gp_active;
+					++gp_channels;
 				} else {
 					//printf("all channels are busy.\n\t\t");
 					if (gp_waiting < BUFFER_SIZE && BUFFER_SIZE > 0) {
@@ -112,7 +112,7 @@ int main(int argc, const char *argv[]) {
 					double dur = GP_MIN_TIME + erlang_random(1, GP_AVG_TIME);
 					events = list_add(events, sim_time + (dur > GP_MAX_TIME? GP_MAX_TIME: dur), EVENT_END);
 				} else {
-					--gp_active;
+					--gp_channels;
 				}
 				break;
 			case EVENT_AS | EVENT_START:
