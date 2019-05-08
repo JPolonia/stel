@@ -67,8 +67,9 @@ double calc_distribuition(int type){
 				dur = AS_SS_MIN + erlang_random(1, AS_SS_AVG);
 			} while ((dur < AS_SS_MIN));// Min time=30s, Max time=0.75s
 			return dur;
-			break;
 	}
+
+	return -1;
 }
 
 int main(int argc, const char *argv[]) {
@@ -131,13 +132,9 @@ int main(int argc, const char *argv[]) {
 
 					//Calcula partida do evento
 					if (is_as()){
-						double dur = poisson_random(AS_AVG_TIME, AS_STDDEV);
-						dur = dur < AS_MIN_TIME? AS_MIN_TIME: dur;
-						dur = dur > AS_MAX_TIME? AS_MAX_TIME: dur;
-						events = list_add(events, sim_time + dur, EVENT_AS | EVENT_START);
+						events = list_add(events, sim_time + calc_distribuition(EVENT_AS | EVENT_START), EVENT_AS | EVENT_START);
 					}else{
-						double dur = GP_MIN_TIME + erlang_random(1, GP_AVG_TIME);
-						events = list_add(events, sim_time + (dur > GP_MAX_TIME? GP_MAX_TIME: dur), EVENT_END);
+						events = list_add(events, sim_time + calc_distribuition(EVENT_END), EVENT_END);
 					}
 				} else if (gp_waiting < BUFFER_SIZE && BUFFER_SIZE > 0){ //If SPACE in BUFFER
 					//printf("all channels are busy.\n\t\t");
@@ -149,8 +146,7 @@ int main(int argc, const char *argv[]) {
 					++blocked_users;
 				}
 				// Calcula chegada de proximo evento
-				;double dur = erlang_random(1, LAMBDA);
-				events = list_add(events, sim_time + dur, EVENT_START);
+				events = list_add(events, sim_time + calc_distribuition(EVENT_START), EVENT_START);
 				break;
 
 			case EVENT_END:
@@ -165,13 +161,9 @@ int main(int argc, const char *argv[]) {
 					next_event(gp_buffer);
 
 					if (is_as()){
-						double dur = poisson_random(AS_AVG_TIME, AS_STDDEV);
-						dur = dur < AS_MIN_TIME? AS_MIN_TIME: dur;
-						dur = dur > AS_MAX_TIME? AS_MAX_TIME: dur;
-						events = list_add(events, sim_time + dur, EVENT_AS | EVENT_START);
+						events = list_add(events, sim_time + calc_distribuition(EVENT_AS | EVENT_START), EVENT_AS | EVENT_START);
 					} else {
-						double dur = GP_MIN_TIME + erlang_random(1, GP_AVG_TIME);
-						events = list_add(events, sim_time + (dur > GP_MAX_TIME? GP_MAX_TIME: dur), EVENT_END);
+						events = list_add(events, sim_time + calc_distribuition(EVENT_END), EVENT_END);
 					}
 				}
 				break;
@@ -188,8 +180,7 @@ int main(int argc, const char *argv[]) {
 					as_channels++; //A channel servers a call
 					gp_channels--; // One channel from GP becomes free, because passes the call to AS
 
-					double as_dur = AS_SS_MIN + erlang_random(1, AS_SS_AVG);
-					events = list_add(events, sim_time + as_dur, EVENT_AS | EVENT_END);
+					events = list_add(events, sim_time +  calc_distribuition( EVENT_AS | EVENT_END), EVENT_AS | EVENT_END);
 
 					/*if (is_as()){	// // os únicos eventos que geram novas chegadas são os de GP, do tipo START
 						double dur = AS_MIN_TIME + erlang_random(1, AS_AVG_TIME);
@@ -216,8 +207,7 @@ int main(int argc, const char *argv[]) {
 					as_channels++;
 					gp_channels--; // One channel from GP becomes free, because passes the call to AS
 
-					double dur = AS_SS_MIN + erlang_random(1, AS_SS_AVG);
-					events = list_add(events, sim_time + dur, EVENT_AS | EVENT_END);
+					events = list_add(events, sim_time + calc_distribuition(EVENT_AS | EVENT_END) , EVENT_AS | EVENT_END);
 
 					// double waited = sim_time - as_buffer->time;
 					// as_delayed_time += waited;
