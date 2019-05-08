@@ -64,8 +64,8 @@ double calc_distribuition(int type){
 			return dur;
 		case EVENT_AS | EVENT_END:
 			do {
-				dur = poisson_random(AS_AVG_TIME, AS_STDDEV);
-			} while ((dur < AS_MIN_TIME) || (dur > AS_MAX_TIME));// Min time=30s, Max time=0.75s
+				dur = AS_SS_MIN + erlang_random(1, AS_SS_AVG);
+			} while ((dur < AS_SS_MIN));// Min time=30s, Max time=0.75s
 			return dur;
 			break;
 	}
