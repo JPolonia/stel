@@ -198,6 +198,7 @@ int main(int argc, const char *argv[]) {
 
 			case EVENT_AS | EVENT_END:  //(11) = 3
 				printf("EVENT AS END: %.2lf\n", sim_time);
+				
 				as_channels--;
 
 				if (as_waiting > 0 /*&& as_buffer != NULL*/) {
@@ -224,7 +225,7 @@ int main(int argc, const char *argv[]) {
 		}
 	}
 
-	printf("total users: %lu (%.2lf%% as events)\n", total_events, (double)as_events*100/total_events);
+	printf("total users: %lu (%.2lf%% as events)\n", total_events, (double)as_events*100/(gp_events+as_events));
 	printf("gp delayed users: %lu (%.2lf%%)\n", gp_delayed, (double)gp_delayed*100/total_events);
 	printf("gp blocked users: %lu (%.2lf%%)\n", blocked_users, (double)blocked_users*100/total_events);
 
