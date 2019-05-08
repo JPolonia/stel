@@ -182,13 +182,11 @@ int main(int argc, const char *argv[]) {
 
 					events = list_add(events, sim_time +  calc_distribuition( EVENT_AS | EVENT_END), EVENT_AS | EVENT_END);
 
-					/*if (is_as()){	// // os únicos eventos que geram novas chegadas são os de GP, do tipo START
-						double dur = AS_MIN_TIME + erlang_random(1, AS_AVG_TIME);
-						events = list_add(events, sim_time + (dur > AS_MAX_TIME? AS_MAX_TIME: dur), EVENT_AS | EVENT_START);
+					if (is_as()){	// // os únicos eventos que geram novas chegadas são os de GP, do tipo START
+						events = list_add(events, sim_time + calc_distribuition( EVENT_AS | EVENT_START), EVENT_AS | EVENT_START);
 					} else {
-						double dur = GP_MIN_TIME + erlang_random(1, GP_AVG_TIME);
-						events = list_add(events, sim_time + (dur > GP_MAX_TIME? GP_MAX_TIME: dur), EVENT_END);
-					}*/
+						events = list_add(events, sim_time + calc_distribuition(EVENT_END), EVENT_END);
+					}
 
 				} else {
 					// ADD TO BUFFER
@@ -213,13 +211,11 @@ int main(int argc, const char *argv[]) {
 					// as_delayed_time += waited;
 					next_event(as_buffer);
 
-					/*if (is_as()){	// os únicos eventos que geram novas chegadas são os de GP, do tipo START
-						double dur = AS_MIN_TIME + erlang_random(1, AS_AVG_TIME);
-						events = list_add(events, sim_time + (dur > AS_MAX_TIME? AS_MAX_TIME: dur), EVENT_AS | EVENT_START);
+					if (is_as()){	// // os únicos eventos que geram novas chegadas são os de GP, do tipo START
+						events = list_add(events, sim_time + calc_distribuition( EVENT_AS | EVENT_START), EVENT_AS | EVENT_START);
 					} else {
-						double dur = GP_MIN_TIME + erlang_random(1, GP_AVG_TIME);
-						events = list_add(events, sim_time + (dur > GP_MAX_TIME? GP_MAX_TIME: dur), EVENT_END);
-					}*/
+						events = list_add(events, sim_time + calc_distribuition(EVENT_END), EVENT_END);
+					}
 				}
 				break;
 			default:
