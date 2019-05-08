@@ -54,7 +54,7 @@ double calc_distribuition(int type){
 			return erlang_random(1, LAMBDA);
 		case EVENT_END:
 			do {
-    	  dur = GP_MIN_TIME + erlang_random(1, GP_AVG_TIME);
+    	  		dur = GP_MIN_TIME + erlang_random(1, GP_AVG_TIME);
 			} while ((dur < GP_MIN_TIME) || (dur > GP_MAX_TIME));
 			return dur;
 		case EVENT_AS | EVENT_START:
